@@ -2,7 +2,10 @@ version: "2.1"
 services:
   subsync:
     container_name: subsync
-    image: domainvault/subsync:latest
+    image: subsync:latest
+    build:
+      context: /path/to/config/subsync
+      dockerfile: subsync.Dockerfile
     user: 1001:100 # plex user:users group
     command: /bin/sh -c "python Subsync-headless/subsync.py"
     restart: unless-stopped
