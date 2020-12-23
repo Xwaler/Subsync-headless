@@ -12,6 +12,6 @@ services:
     environment:
       - TZ=Europe/Paris
     volumes:
-      - /path/to/config/subsync:/config
+      - /path/to/config/subsync:/.config
       - /path/to/movies:/movies
       - /path/to/series:/series
