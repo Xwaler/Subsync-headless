@@ -38,11 +38,13 @@ def sync(file):
     try:
         print(command)
         check_call(shlex.split(command))
-        os.remove(file)
 
     except CalledProcessError:
-        print('Sync failed !')
-        time.sleep(150)
+        print(f'Sync failed ! Removing job ({os.path.basename(file)})')
+        time.sleep(1)
+
+    finally:
+        os.remove(file)
 
 
 if __name__ == '__main__':
@@ -59,9 +61,12 @@ if __name__ == '__main__':
             c.release()
             for thing in content:
                 path = os.path.join(JOBS_FOLDER, thing)
-                if os.path.isfile(path):
-                    sync(path)
+                if os.path.exists(path):
+                    if os.path.isfile(path):
+                        sync(path)
+                    else:
+                        print(f'Warning: non-file found in jobs queue ({thing})')
                 else:
-                    print(f'Warning: non-file found in jobs queue ({path})')
+                    print(f"Job file doesn't exist ({thing})")
         else:
             c.release()
