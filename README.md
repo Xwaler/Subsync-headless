@@ -8,7 +8,7 @@ echo "subsync --cli sync
 --ref '{{episode}}' --ref-lang '{{episode_language_code3}}'
 --sub '{{subtitles}}' --sub-lang '{{subtitles_language_code3}}'
 --out '{{subtitles}}' --overwrite" 
-> '/subsync/{{subtitles}}.job
+> '/subsync/{{episode_name}}.{{subtitles_language_code3}}.job';
 ```
 With the Bazarr subsync folder referencing the config/subsync/jobs folder.
 
