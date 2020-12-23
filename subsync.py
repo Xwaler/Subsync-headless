@@ -7,7 +7,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from subprocess import check_call, CalledProcessError
 
-JOBS_FOLDER = '/config/jobs'
+JOBS_FOLDER = '/.config/jobs'
 
 if not os.path.exists(JOBS_FOLDER):
     os.mkdir(JOBS_FOLDER)
