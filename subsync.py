@@ -1,6 +1,7 @@
 import os
 import time
 import shlex
+import shutil
 import threading
 
 from watchdog.observers import Observer
@@ -8,9 +9,12 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from subprocess import check_call, CalledProcessError
 
 JOBS_FOLDER = '/.config/jobs'
+FAILED_JOBS_FOLDER = '/.config/failed_jobs'
 
 if not os.path.exists(JOBS_FOLDER):
     os.mkdir(JOBS_FOLDER)
+if not os.path.exists(FAILED_JOBS_FOLDER):
+    os.mkdir(FAILED_JOBS_FOLDER)
 
 c = threading.Condition()
 last_file_event = 0
@@ -40,8 +44,8 @@ def sync(file):
         check_call(shlex.split(command))
 
     except CalledProcessError:
-        print(f'Sync failed ! Removing job ({os.path.basename(file)})')
-        time.sleep(1)
+        print(f'Sync failed ! ({os.path.basename(file)})')
+        shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     finally:
         os.remove(file)
