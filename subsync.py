@@ -42,6 +42,8 @@ def sync(file):
     try:
         print(command)
         check_call(shlex.split(command))
+        if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
+            os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     except CalledProcessError:
         print(f'Sync failed ! ({os.path.basename(file)})')
