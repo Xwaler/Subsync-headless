@@ -38,6 +38,11 @@ class AnyEventHandler(FileSystemEventHandler):
 def sync(file):
     with open(file, 'r') as f:
         command = f.readline()
+    command = command\
+        .replace('-lang fra', '-lang fre')\
+        .replace('-lang deu', '-lang ger')\
+        .replace('-lang lit', '-lang eng')
+    # Bazarr thinks YTS.LT releases are Lithuanian
 
     try:
         print(command)
