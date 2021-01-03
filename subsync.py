@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import shlex
 import shutil
@@ -47,10 +48,9 @@ def sync(file):
 
     with open(file, 'r') as f:
         command = f.readline()
-    command = command\
-        .replace('-lang fra', '-lang fre')\
-        .replace('-lang deu', '-lang ger')\
-        .replace('-lang lit', '-lang eng')
+    re.sub(r'-lang [\'"]?fra[\'"]?', '-lang fre', command)
+    re.sub(r'-lang [\'"]?deu[\'"]?', '-lang ger', command)
+    re.sub(r'-lang [\'"]?lit[\'"]?', '-lang eng', command)
     # Bazarr thinks YTS.LT releases are Lithuanian
 
     try:
