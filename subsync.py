@@ -48,6 +48,7 @@ def sync(file):
 
     with open(file, 'r') as f:
         command = f.readline()
+    command = re.sub(r'^subsync', '/subsync/bin/subsync', command)
     command = re.sub(r'-lang [\'"]?fra[\'"]?', '-lang fre', command)
     command = re.sub(r'-lang [\'"]?deu[\'"]?', '-lang ger', command)
     command = re.sub(r'-lang [\'"]?lit[\'"]?', '-lang eng', command)
@@ -64,7 +65,8 @@ def sync(file):
 
         ref = re.findall(r'(?<=--ref ")[^"]+(?=")', command)
         sub = re.findall(r'(?<=--sub ")[^"]+(?=")', command)
-        command = f'ffsubsync "{ref}" -i "{sub}" --overwrite-input --encoding UTF-8 --max-offset-seconds 600'
+        command = f'/usr/local/bin/ffsubsync "{ref}" -i "{sub}" ' \
+                  f'--overwrite-input --encoding UTF-8 --max-offset-seconds 600'
 
         try:
             print(command)
