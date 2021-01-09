@@ -60,8 +60,21 @@ def sync(file):
             os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     except CalledProcessError:
-        print(f'Sync failed ! ({os.path.basename(file)})')
-        shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
+        print(f'Subsync failed ! ({os.path.basename(file)})')
+
+        ref = re.findall(r'(?<=--ref ")[^"]+(?=")', command)
+        sub = re.findall(r'(?<=--sub ")[^"]+(?=")', command)
+        command = f'ffsubsync "{ref}" -i "{sub}" --overwrite-input --encoding UTF-8 --max-offset-seconds 600'
+
+        try:
+            print(command)
+            check_call(shlex.split(command))
+            if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
+                os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
+
+        except CalledProcessError:
+            print(f'FFSubsync failed ! ({os.path.basename(file)})')
+            shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     finally:
         working_lock.acquire()
