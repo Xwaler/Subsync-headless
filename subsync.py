@@ -63,8 +63,8 @@ def sync(file):
     except CalledProcessError:
         print(f'Subsync failed ! ({os.path.basename(file)})')
 
-        ref = re.findall(r'(?<=--ref ")[^"]+(?=")', command)
-        sub = re.findall(r'(?<=--sub ")[^"]+(?=")', command)
+        ref = re.findall(r'(?<=--ref ")[^"]+(?=")', command)[0]
+        sub = re.findall(r'(?<=--sub ")[^"]+(?=")', command)[0]
         command = f'/usr/local/bin/ffsubsync "{ref}" -i "{sub}" ' \
                   f'--overwrite-input --encoding UTF-8 --max-offset-seconds 600'
 
