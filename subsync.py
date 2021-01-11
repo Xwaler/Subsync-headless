@@ -83,7 +83,7 @@ def sync(file):
         try:
             stdout = check_output(shlex.split(command), stderr=STDOUT, encoding='UTF-8')
             if 'Synchronization failed' in str(stdout):
-                raise CalledProcessError
+                raise CalledProcessError(2, shlex.split(command))
             print(f'Successful ffsubsync {os.path.basename(file)}')
             if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
                 os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
