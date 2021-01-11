@@ -2,13 +2,14 @@
 
 Asynchronously execute subsync jobs put in config/subsync/jobs. 
 Each job is a file containing the subsync command to execute.
-This tool is meant to be used as postprocessing for Bazarr, an example of command is:
+This tool is meant to be used as postprocessing for Bazarr with the command:
 ```
-echo "subsync --cli --verbose 2 sync 
---ref \"{{episode}}\" --ref-stream-by-type audio --ref-lang \"{{episode_language_code3}}\" 
---sub \"{{subtitles}}\" --sub-lang \"{{subtitles_language_code3}}\" 
---out \"{{subtitles}}\" --overwrite --effort .75 --jobs 0 --window-size 1800" 
-> "/subsync/{{episode_name}}.{{subtitles_language_code3}}.job";
+echo "{
+\"ref\": \"{{episode}}\", \"ref_lang\": \"{{episode_language_code3}}\", 
+\"sub\": \"{{subtitles}}\", \"sub_lang\": \"{{subtitles_language_code3}}\",
+\"sub_code_2\": \"{{subtitles_language_code2}}\", \"sub_id\": \"{{subtitle_id}}\", 
+\"provider\": \"{{provider}}\", \"series_id\": \"{{series_id}}\", \"episode_id\": \"{{episode_id}}\"
+}" > "/subsync/{{episode_name}}.{{subtitles_language_code3}}.json";
 ```
 With the Bazarr subsync folder referencing the config/subsync/jobs folder.
 

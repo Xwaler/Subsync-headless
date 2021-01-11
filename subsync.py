@@ -1,14 +1,17 @@
 import os
-import re
 import time
 import shlex
 import shutil
+import requests
 import threading
+import json
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from subprocess import check_call, CalledProcessError
 
+BAZARR_URL = os.environ.get('BAZARR_URL')
+BAZARR_API_KEY = os.environ.get('BAZARR_API_KEY')
 NUM_WORKERS = int(os.environ.get('NUM_WORKERS')) if os.environ.get('NUM_WORKERS') else 1
 
 JOBS_FOLDER = '/.config/jobs'
@@ -47,12 +50,18 @@ def sync(file):
     global working
 
     with open(file, 'r') as f:
-        command = f.readline()
-    command = re.sub(r'^subsync', '/subsync/bin/subsync', command)
-    command = re.sub(r'-lang [\'"]?fra[\'"]?', '-lang fre', command)
-    command = re.sub(r'-lang [\'"]?deu[\'"]?', '-lang ger', command)
-    command = re.sub(r'-lang [\'"]?lit[\'"]?', '-lang eng', command)
-    # Bazarr thinks YTS.LT releases are Lithuanian
+        job = json.load(f)
+
+    subsync_ref_lang = job['ref_lang'] \
+        .replace('fra', 'fre') \
+        .replace('deu', 'ger') \
+        .replace('lit', 'eng')  # Bazarr thinks YTS.LT releases are Lithuanian
+
+    print(f'Syncing {os.path.basename(file)}')
+    command = f'/subsync/bin/subsync --cli --verbose 0 sync ' \
+              f'--ref "{job["ref"]}" --ref-stream-by-type audio --ref-lang "{subsync_ref_lang}" ' \
+              f'--sub "{job["sub"]}" --sub-lang "{job["sub_lang"]}" ' \
+              f'--out "{job["sub"]}" --overwrite --effort .33'
 
     try:
         print(command)
@@ -63,10 +72,8 @@ def sync(file):
     except CalledProcessError:
         print(f'Subsync failed ! ({os.path.basename(file)})')
 
-        ref = re.findall(r'(?<=--ref ")[^"]+(?=")', command)[0]
-        sub = re.findall(r'(?<=--sub ")[^"]+(?=")', command)[0]
-        command = f'/usr/local/bin/ffsubsync "{ref}" -i "{sub}" ' \
-                  f'--overwrite-input --encoding UTF-8 --max-offset-seconds 600'
+        command = f'/usr/local/bin/ffsubsync "{job["ref"]}" -i "{job["sub"]}" ' \
+                  f' --max-offset-seconds 600 --encoding UTF-8 --overwrite-input'
 
         try:
             print(command)
@@ -77,6 +84,55 @@ def sync(file):
         except CalledProcessError:
             print(f'FFSubsync failed ! ({os.path.basename(file)})')
             shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
+
+            success = False
+            for forced, hi in (('false', 'false'), ('true', 'false'), ('false', 'true')):
+                if not job.series_id:
+                    data = {
+                        'apikey': BAZARR_API_KEY,
+                        'video_path': job["ref"],
+                        'subtitles_path': job["sub"],
+                        'radarr_id': job["episode_id"],
+                        'provider': job["provider"],
+                        'subs_id': job["subtitle_id"],
+                        'language': job["sub_code_2"],
+                        'forced': forced,
+                        'hi': hi,
+                    }
+                    try:
+                        r = requests.post(f"{BAZARR_URL}/api/blacklist_movie_subtitles_add", data=data)
+                        if r.ok:
+                            print(f'{os.path.basename(file)} blacklisted')
+                            success = True
+                            break
+                    except Exception as e:
+                        print(e)
+                        continue
+                else:
+                    data = {
+                        'apikey': BAZARR_API_KEY,
+                        'video_path': job["ref"],
+                        'subtitles_path': job["sub"],
+                        'sonarr_series_id': job["series_id"],
+                        'sonarr_episode_id': job["episode_id"],
+                        'provider': job["provider"],
+                        'subs_id': job["subtitle_id"],
+                        'language': job["sub_code_2"],
+                        'forced': forced,
+                        'hi': hi,
+                    }
+                    try:
+                        r = requests.post(f"{BAZARR_URL}/api/blacklist_episode_subtitles_add", data=data)
+                        if r.ok:
+                            print(f'{os.path.basename(file)} blacklisted')
+                            success = True
+                            break
+                    except Exception as e:
+                        print(e)
+                        continue
+
+            if not success:
+                print(f'Failed to blacklist {os.path.basename(file)}')
 
     finally:
         working_lock.acquire()
@@ -93,11 +149,11 @@ if __name__ == '__main__':
     observer.start()
 
     while True:
-        time.sleep(10)
+        time.sleep(3)
 
         event_lock.acquire()
         content = os.listdir(JOBS_FOLDER)
-        if last_file_event + 30 < time.time():
+        if last_file_event + 10 < time.time():
             event_lock.release()
             for thing in content:
                 path = os.path.join(JOBS_FOLDER, thing)
