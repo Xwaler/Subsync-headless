@@ -8,7 +8,7 @@ import json
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, DEVNULL, CalledProcessError
 
 BAZARR_URL = os.environ.get('BAZARR_URL')
 BAZARR_API_KEY = os.environ.get('BAZARR_API_KEY')
@@ -65,24 +65,26 @@ def sync(file):
 
     try:
         print(command)
-        check_call(shlex.split(command))
+        check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
+        print(f'Successful subsync {os.path.basename(file)}')
         if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
             os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     except CalledProcessError:
-        print(f'Subsync failed ! ({os.path.basename(file)})')
+        print(f'Subsync failed {os.path.basename(file)}')
 
         command = f'/usr/local/bin/ffsubsync "{job["ref"]}" -i "{job["sub"]}" ' \
                   f' --max-offset-seconds 600 --encoding UTF-8 --overwrite-input'
 
         try:
             print(command)
-            check_call(shlex.split(command))
+            check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
+            print(f'Successful ffsubsync {os.path.basename(file)}')
             if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
                 os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
         except CalledProcessError:
-            print(f'FFSubsync failed ! ({os.path.basename(file)})')
+            print(f'FFSubsync failed {os.path.basename(file)}')
             shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
             success = False
@@ -102,7 +104,6 @@ def sync(file):
                     try:
                         r = requests.post(f"{BAZARR_URL}/api/blacklist_movie_subtitles_add", data=data)
                         if r.ok:
-                            print(f'{os.path.basename(file)} blacklisted')
                             success = True
                             break
                     except Exception as e:
@@ -124,14 +125,15 @@ def sync(file):
                     try:
                         r = requests.post(f"{BAZARR_URL}/api/blacklist_episode_subtitles_add", data=data)
                         if r.ok:
-                            print(f'{os.path.basename(file)} blacklisted')
                             success = True
                             break
                     except Exception as e:
                         print(e)
                         continue
 
-            if not success:
+            if success:
+                print(f'Blacklisted {os.path.basename(file)}')
+            else:
                 print(f'Failed to blacklist {os.path.basename(file)}')
 
     finally:
