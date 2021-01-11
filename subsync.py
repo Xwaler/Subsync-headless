@@ -57,10 +57,15 @@ def sync(file):
         .replace('deu', 'ger') \
         .replace('lit', 'eng')  # Bazarr thinks YTS.LT releases are Lithuanian
 
+    subsync_sub_lang = job['sub_lang'] \
+        .replace('fra', 'fre') \
+        .replace('deu', 'ger') \
+        .replace('lit', 'eng')  # Bazarr thinks YTS.LT releases are Lithuanian
+
     print(f'Syncing {os.path.basename(file)}')
     command = f'/subsync/bin/subsync --cli --verbose 0 sync ' \
               f'--ref "{job["ref"]}" --ref-stream-by-type audio --ref-lang "{subsync_ref_lang}" ' \
-              f'--sub "{job["sub"]}" --sub-lang "{job["sub_lang"]}" ' \
+              f'--sub "{job["sub"]}" --sub-lang "{subsync_sub_lang}" ' \
               f'--out "{job["sub"]}" --overwrite --effort .33'
 
     try:
