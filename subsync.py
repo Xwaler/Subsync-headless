@@ -8,7 +8,7 @@ import json
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from subprocess import check_call, DEVNULL, CalledProcessError
+from subprocess import check_call, DEVNULL, check_output, STDOUT, CalledProcessError
 
 BAZARR_URL = os.environ.get('BAZARR_URL')
 BAZARR_API_KEY = os.environ.get('BAZARR_API_KEY')
@@ -81,7 +81,9 @@ def sync(file):
                   f' --max-offset-seconds 600 --encoding UTF-8 --overwrite-input'
 
         try:
-            check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
+            stdout = check_output(shlex.split(command), stderr=STDOUT, encoding='UTF-8')
+            if 'Synchronization failed' in str(stdout):
+                raise CalledProcessError
             print(f'Successful ffsubsync {os.path.basename(file)}')
             if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
                 os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
