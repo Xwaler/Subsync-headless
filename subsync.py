@@ -66,10 +66,9 @@ def sync(file):
     command = f'/subsync/bin/subsync --cli --verbose 0 sync ' \
               f'--ref "{job["ref"]}" --ref-stream-by-type audio --ref-lang "{subsync_ref_lang}" ' \
               f'--sub "{job["sub"]}" --sub-lang "{subsync_sub_lang}" ' \
-              f'--out "{job["sub"]}" --overwrite --effort .33'
+              f'--out "{job["sub"]}" --overwrite --effort .50 --window-size 1200 --min-points-no 30'
 
     try:
-        print(command)
         check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
         print(f'Successful subsync {os.path.basename(file)}')
         if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
@@ -82,7 +81,6 @@ def sync(file):
                   f' --max-offset-seconds 600 --encoding UTF-8 --overwrite-input'
 
         try:
-            print(command)
             check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
             print(f'Successful ffsubsync {os.path.basename(file)}')
             if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
