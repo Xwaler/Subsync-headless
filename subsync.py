@@ -94,7 +94,7 @@ def sync(file):
 
             success = False
             for forced, hi in (('false', 'false'), ('true', 'false'), ('false', 'true')):
-                if not job.series_id:
+                if not job["series_id"]:
                     data = {
                         'apikey': BAZARR_API_KEY,
                         'video_path': job["ref"],
