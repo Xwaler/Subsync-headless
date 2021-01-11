@@ -70,8 +70,8 @@ def sync(file):
         if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
             os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
-    except CalledProcessError:
-        print(f'Subsync failed {os.path.basename(file)}')
+    except CalledProcessError as e:
+        print(f'Subsync failed {os.path.basename(file)} | {e}')
 
         command = f'/usr/local/bin/ffsubsync "{job["ref"]}" -i "{job["sub"]}" ' \
                   f' --max-offset-seconds 600 --encoding UTF-8 --overwrite-input'
@@ -83,8 +83,8 @@ def sync(file):
             if os.path.exists(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file))):
                 os.remove(os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
-        except CalledProcessError:
-            print(f'FFSubsync failed {os.path.basename(file)}')
+        except CalledProcessError as e:
+            print(f'FFSubsync failed {os.path.basename(file)} | {e}')
             shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
             success = False
