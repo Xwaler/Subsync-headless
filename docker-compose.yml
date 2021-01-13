@@ -4,10 +4,9 @@ services:
     container_name: subsync
     image: subsync:latest
     build:
-      context: /path/to/config/subsync
-      dockerfile: subsync.Dockerfile
+      context: /path/to/config/subsync/Subsync-headless
     user: 1001:100 # plex user:users group
-    command: /bin/sh -c "python Subsync-headless/subsync.py"
+    command: /bin/sh -c "python /.config/Subsync-headless/subsync.py"
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
