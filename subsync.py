@@ -49,6 +49,7 @@ def sync(file):
     global worker_sem
     global working
 
+    deleted = False
     with open(file, 'r') as f:
         job = json.load(f)
 
@@ -90,7 +91,11 @@ def sync(file):
 
         except CalledProcessError as e:
             print(f'FFSubsync failed {os.path.basename(file)} | {e}')
+            working_lock.acquire()
             shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
+            os.remove(file)
+            deleted = True
+            working_lock.release()
 
             success = False
             for forced, hi in (('false', 'false'), ('true', 'false'), ('false', 'true')):
@@ -143,7 +148,8 @@ def sync(file):
 
     finally:
         working_lock.acquire()
-        os.remove(file)
+        if not deleted:
+            os.remove(file)
         working.remove(file)
         working_lock.release()
 
