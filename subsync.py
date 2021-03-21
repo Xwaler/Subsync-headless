@@ -53,6 +53,9 @@ def sync(file):
     with open(file, 'r') as f:
         job = json.load(f)
 
+    if job['ref_lang'] == 'None':
+        job['ref_lang'] = 'eng'
+
     subsync_ref_lang = job['ref_lang'] \
         .replace('fra', 'fre') \
         .replace('deu', 'ger') \
