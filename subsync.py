@@ -12,6 +12,8 @@ from subprocess import check_call, DEVNULL, check_output, STDOUT, CalledProcessE
 
 BAZARR_URL = os.environ.get('BAZARR_URL')
 BAZARR_API_KEY = os.environ.get('BAZARR_API_KEY')
+BAZARR_USERNAME = os.environ.get('BAZARR_USERNAME')
+BAZARR_PASSWORD = os.environ.get('BAZARR_PASSWORD')
 NUM_WORKERS = int(os.environ.get('NUM_WORKERS')) if os.environ.get('NUM_WORKERS') else 1
 
 JOBS_FOLDER = '/.config/jobs'
@@ -100,54 +102,30 @@ def sync(file):
             deleted = True
             working_lock.release()
 
-            success = False
-            for forced, hi in (('false', 'false'), ('true', 'false'), ('false', 'true')):
-                if not job["series_id"]:
-                    data = {
-                        'apikey': BAZARR_API_KEY,
-                        'video_path': job["ref"],
-                        'subtitles_path': job["sub"],
-                        'radarr_id': job["episode_id"],
-                        'provider': job["provider"],
-                        'subs_id': job["sub_id"],
-                        'language': job["sub_code_2"],
-                        'forced': forced,
-                        'hi': hi,
-                    }
-                    try:
-                        r = requests.post(f"{BAZARR_URL}/api/blacklist_movie_subtitles_add", data=data)
-                        if r.ok:
-                            success = True
-                            break
-                    except Exception as e:
-                        print(e)
-                        continue
-                else:
-                    data = {
-                        'apikey': BAZARR_API_KEY,
-                        'video_path': job["ref"],
-                        'subtitles_path': job["sub"],
-                        'sonarr_series_id': job["series_id"],
-                        'sonarr_episode_id': job["episode_id"],
-                        'provider': job["provider"],
-                        'subs_id': job["sub_id"],
-                        'language': job["sub_code_2"],
-                        'forced': forced,
-                        'hi': hi,
-                    }
-                    try:
-                        r = requests.post(f"{BAZARR_URL}/api/blacklist_episode_subtitles_add", data=data)
-                        if r.ok:
-                            success = True
-                            break
-                    except Exception as e:
-                        print(e)
-                        continue
-
-            if success:
-                print(f'Blacklisted {os.path.basename(file)}')
+            print(f'Blacklisting {os.path.basename(file)}')
+            s = requests.session()
+            headers = {"x-api-key": BAZARR_API_KEY}
+            r = s.post(f"{BAZARR_URL}/api/system/account?action=login",
+                       data={"username": BAZARR_USERNAME, "password": BAZARR_PASSWORD})
+            if not r.ok:
+                print("Authentication failed")
             else:
-                print(f'Failed to blacklist {os.path.basename(file)}')
+                data = {
+                    'subtitles_path': job["sub"],
+                    'provider': job["provider"],
+                    'subs_id': job["sub_id"],
+                    'language': job["sub_code_2"],
+                }
+                if not job["series_id"]:
+                    url = f"{BAZARR_URL}/api/movies/blacklist?radarrid={job['episode_id']}"
+                else:
+                    url = f"{BAZARR_URL}/api/episodes/blacklist?seriesid={job['series_id']}&episodeid={job['episode_id']}"
+                r = s.post(url, data=data, headers=headers)
+
+                if r.ok:
+                    print(f'Blacklisted {os.path.basename(file)}')
+                else:
+                    print(f'Failed to blacklist {os.path.basename(file)} : {r.text}')
 
     finally:
         working_lock.acquire()
