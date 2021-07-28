@@ -49,7 +49,6 @@ def sync(file):
     global worker_sem
     global working
 
-    deleted = False
     with open(file, 'r') as f:
         job = json.load(f)
 
@@ -67,7 +66,7 @@ def sync(file):
     command = f'/subsync/bin/subsync --cli --verbose 0 sync ' \
               f'--ref "{job["ref"]}" --ref-stream-by-type audio --ref-lang "{subsync_ref_lang}" ' \
               f'--sub "{job["sub"]}" --sub-lang "{subsync_sub_lang}" ' \
-              f'--out "{job["sub"]}" --overwrite --effort .50 --window-size 1200 --min-points-no 30'
+              f'--out "{job["sub"]}" --overwrite'
 
     try:
         check_call(shlex.split(command), stdout=DEVNULL, stderr=DEVNULL)
@@ -91,11 +90,6 @@ def sync(file):
 
         except CalledProcessError as e:
             print(f'FFSubsync failed {os.path.basename(file)} | {e}')
-            working_lock.acquire()
-            shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
-            os.remove(file)
-            deleted = True
-            working_lock.release()
 
             success = False
             for forced, hi in (('false', 'false'), ('true', 'false'), ('false', 'true')):
@@ -145,11 +139,11 @@ def sync(file):
                 print(f'Blacklisted {os.path.basename(file)}')
             else:
                 print(f'Failed to blacklist {os.path.basename(file)}')
+                shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     finally:
         working_lock.acquire()
-        if not deleted:
-            os.remove(file)
+        os.remove(file)
         working.remove(file)
         working_lock.release()
 
