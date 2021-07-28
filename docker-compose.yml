@@ -12,6 +12,8 @@ services:
       - TZ=Europe/Paris
       - BAZARR_URL="http://bazarr:6767"
       - BAZARR_API_KEY=foobar
+      - BAZARR_USERNAME=admin
+      - BAZARR_PASSWORD=foobar
       - NUM_WORKERS=2
     volumes:
       - /path/to/config/subsync:/.config
