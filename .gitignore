@@ -128,3 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
+
+jobs/
+failed_jobs/
+subsync/

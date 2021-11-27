@@ -16,8 +16,8 @@ BAZARR_USERNAME = os.environ.get('BAZARR_USERNAME')
 BAZARR_PASSWORD = os.environ.get('BAZARR_PASSWORD')
 NUM_WORKERS = int(os.environ.get('NUM_WORKERS')) if os.environ.get('NUM_WORKERS') else 1
 
-JOBS_FOLDER = '/.config/jobs'
-FAILED_JOBS_FOLDER = '/.config/failed_jobs'
+JOBS_FOLDER = 'jobs'
+FAILED_JOBS_FOLDER = 'failed_jobs'
 
 if not os.path.exists(JOBS_FOLDER):
     os.mkdir(JOBS_FOLDER)
