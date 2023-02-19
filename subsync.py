@@ -10,10 +10,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from subprocess import check_call, DEVNULL, check_output, STDOUT, CalledProcessError
 
-BAZARR_URL = os.environ.get('BAZARR_URL')
-BAZARR_API_KEY = os.environ.get('BAZARR_API_KEY')
-BAZARR_USERNAME = os.environ.get('BAZARR_USERNAME')
-BAZARR_PASSWORD = os.environ.get('BAZARR_PASSWORD')
 NUM_WORKERS = int(os.environ.get('NUM_WORKERS')) if os.environ.get('NUM_WORKERS') else 1
 
 JOBS_FOLDER = 'jobs'
@@ -95,33 +91,7 @@ def sync(file):
 
         except CalledProcessError as e:
             print(f'FFSubsync failed {os.path.basename(file)} | {e}')
-
-            print(f'Blacklisting {os.path.basename(file)}')
-            s = requests.session()
-            headers = {"x-api-key": BAZARR_API_KEY}
-            r = s.post(f"{BAZARR_URL}/api/system/account?action=login",
-                       data={"username": BAZARR_USERNAME, "password": BAZARR_PASSWORD})
-            if not r.ok:
-                print("Authentication failed")
-                shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
-            else:
-                data = {
-                    'subtitles_path': job["sub"],
-                    'provider': job["provider"],
-                    'subs_id': job["sub_id"],
-                    'language': job["sub_code_2"],
-                }
-                if not job["series_id"]:
-                    url = f"{BAZARR_URL}/api/movies/blacklist?radarrid={job['episode_id']}"
-                else:
-                    url = f"{BAZARR_URL}/api/episodes/blacklist?seriesid={job['series_id']}&episodeid={job['episode_id']}"
-                r = s.post(url, data=data, headers=headers)
-
-                if r.ok:
-                    print(f'Blacklisted {os.path.basename(file)}')
-                else:
-                    print(f'Failed to blacklist {os.path.basename(file)} : {r.text}')
-                    shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
+            shutil.copy(file, os.path.join(FAILED_JOBS_FOLDER, os.path.basename(file)))
 
     finally:
         working_lock.acquire()
